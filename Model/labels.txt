@@ -1,0 +1,8 @@
+0 Hola
+1 Gracias
+2 Si
+3 No
+4 Te amo
+5 Adios 
+6 Permiso
+

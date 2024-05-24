@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <script src="https://kit.fontawesome.com/589d8e8b21.js" crossorigin="anonymous"></script>
+    <meta charset="UTF-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&family=Satisfy&family=Teko:wght@300..700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Major+Mono+Display&family=Satisfy&family=Teko:wght@300..700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simeío</title>
+    <link rel="stylesheet" href="/static/styles.css"> 
+</head>
+<body>
+    <!-- Header de navegación -->
+    <header>
+        <nav>
+            <ul>
+                <li class="icon-container"><a href="index.html"><img src="/static/icon.png" alt="Icono" class="icon" ></a></li>
+                <li class="nav-item"><a href="quienes_somos.html">Quiénes Somos</a></li>
+                <li class="nav-item"><a href="#contacto">Contacto</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Cuerpo de la página -->
+    <main>
+        <h1 class="eslogan">"Uniendo Palabras, Eliminando Barreras"</h1>
+        <section class="imagenes">
+            <div class="imagen-container">
+                <img src="/static/img1.jpg" alt="PC">
+                <a href="{{url_for('render_pag3_template')}}" class="boton">Traducir Lenguaje de Señas</a>
+            </div>
+            <div class="imagen-container">
+                <img src="/static/img3.jpg" alt="Notebooks">
+                <a href="pag4.html" class="boton">Traducir a Texto</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer id="contacto">
+        <div class="footer-container">
+            <div class="footer-row">
+                <div class="footer-col">
+                    <h4>Contactos</h4>
+                    <ul>
+                        <li><a href="index.html">Contacto: manusamica@gmail.com</a></li>
+                        <li><a href="#pc">Teléfono: +595 986 627542</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>SEGUINOS</h4>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; By ManusAmica</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
