@@ -5,40 +5,40 @@ import math
 import time
 import os
 
-# configuration settings
+# Configuration settings
 IMG_SIZE = 300
 OFFSET = 20
 BASE_FOLDER = "./Data/train"
 CLASSES = ["class 1", "class 2", "class 3", "class 4", "class 5", "class 6", "class 7"]
 
-# initialize camera and hand detector
+# Initialize camera and hand detector
 cap = cv2.VideoCapture(0)
 detector = HandDetector(maxHands=1)
 current_class = 0
 counter = 0
 
 def ensure_dir(path):
-    """ensure that the directory exists; if not, create it."""
+    """Ensure the directory exists; create if not."""
     os.makedirs(path, exist_ok=True)
 
 def save_image(img, class_name):
-    """save processed image to the specified class directory."""
+    """Save processed image to the specified class directory."""
     global counter
     folder_path = os.path.join(BASE_FOLDER, class_name)
     ensure_dir(folder_path)
     filename = f"image_{time.time():.0f}.jpg"
     cv2.imwrite(os.path.join(folder_path, filename), img)
     counter += 1
-    print(f"saved {counter} images to {class_name}")
+    print(f"Saved {counter} images to {class_name}")
 
 def switch_class():
-    """cycle to the next class and print the updated class."""
+    """Cycle to the next class and update current class."""
     global current_class
     current_class = (current_class + 1) % len(CLASSES)
     print(f"Switched to {CLASSES[current_class]}")
 
 def preprocess_image(img, bbox):
-    """crop, pad, and resize the image around the hand bounding box while maintaining aspect ratio."""
+    """Crop, pad, and resize the image around the hand bounding box with aspect ratio preserved."""
     x, y, w, h = bbox
     x1, y1 = max(0, x - OFFSET), max(0, y - OFFSET)
     x2, y2 = min(img.shape[1], x + w + OFFSET), min(img.shape[0], y + h + OFFSET)
@@ -71,11 +71,9 @@ while True:
     if hands:
         hand = hands[0]
         img_processed = preprocess_image(img, hand['bbox'])
-        cv2.imshow('processed Image', img_processed)
-    else:
-        img_processed = None
+        cv2.imshow('Processed Image', img_processed)
 
-    cv2.imshow('original Image', img)
+    cv2.imshow('Original Image', img)
 
     key = cv2.waitKey(1)
     if key == ord("s") and img_processed is not None:
@@ -85,6 +83,6 @@ while True:
     elif key == ord("q"):
         break
 
-# release resources
+# Release resources
 cap.release()
 cv2.destroyAllWindows()

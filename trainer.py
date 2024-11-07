@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 import os
 import numpy as np
 import tensorflow as tf
@@ -7,13 +8,15 @@ from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.models import Model
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 
+load_dotenv()
+
 # Configuration settings
-TRAIN_DIR = "./Data/train"
-VAL_DIR = "./Data/validation"
+TRAIN_DIR = os.getenv("TRAIN_DIR")
+VAL_DIR = os.getenv("VAL_DIR")
 BATCH_SIZE = 32
 IMG_SIZE = (224, 224)
 EPOCHS = 30
-MODEL_PATH = "./Model/keras_model.keras"
+MODEL_PATH = os.getenv("MODEL_PATH")
 NUM_CLASSES = len(os.listdir(TRAIN_DIR))  # Assumes one folder per class in TRAIN_DIR
 
 def load_data():
