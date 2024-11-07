@@ -4,79 +4,65 @@ from cvzone.HandTrackingModule import HandDetector
 from keras.models import load_model
 from flask import Flask, render_template, Response
 
-# Cargar el modelo previamente entrenado
-model_path = "C:\\Users\\59598\\Desktop\\Simeio\\Model\\keras_model.keras"
+# load model and labels for gesture classification
+model_path = "./Model/keras_model.keras"
 model = load_model(model_path, compile=False)
-
-# Etiquetas para la clasificación
-labels_path = "C:\\Users\\59598\\Desktop\\Simeio\\Model\\labels.txt"
+labels_path = "./Model/labels.txt"
 with open(labels_path, "r") as f:
-    labels = f.readlines()
+    labels = [label.strip() for label in f]
 
-# Quitar caracteres de espacio adicionales de las etiquetas
-labels = [label.strip() for label in labels]
-
-# Imprimir el número de etiquetas y las etiquetas para depuración
-print("Número de etiquetas:", len(labels))
-print("Etiquetas:", labels)
-
-# Inicializar el detector de manos
+# initialize hand detector and camera (once to avoid overhead)
 detector = HandDetector(maxHands=1)
+cap = cv2.VideoCapture(0)
 
-# Inicializar la aplicación Flask
+# set up flask application
 app = Flask(__name__)
 
-# Función para obtener el frame
+
 def get_frame():
-    # Capturar video desde la cámara
-    cap = cv2.VideoCapture(0)
+
     while True:
+        """Capture frames in real-time, predict gestures, and return the frame with the result."""
         success, img = cap.read()
-        if not success or img is None:  # Verificar si el frame se capturó correctamente
-            continue  # Saltar la iteración actual si el frame es None
+        if not success or img is None:
+            continue 
 
         imgOutput = img.copy()
-        
-        # Encontrar manos en el frame
-        hands, img = detector.findHands(img)
+        hands, img = detector.findHands(img) # detect hand or hands in the frame
         
         if hands:
+            # extract and adjust region of interest around the detected hand
             hand = hands[0]
             x, y, w, h = hand['bbox']
-            # Asegurarse de que el cuadro delimitador esté dentro de los límites de la imagen
-            x = max(0, x)
-            y = max(0, y)
-            w = min(w, img.shape[1] - x)
-            h = min(h, img.shape[0] - y)
-            
-            # Recortar la región de interés
+            x, y = max(0, x), max(0, y)
+            w, h = min(w, img.shape[1] - x), min(h, img.shape[0] - y)
             imgCrop = img[y:y + h, x:x + w]
             
-            if imgCrop.size != 0:  # Verificar si la imagen recortada no está vacía
-                # Preprocesar la imagen (cambiar tamaño, normalizar, etc.)
+            if imgCrop.size != 0:
+                # preprocess the image for prediction
                 imgPreprocessed = cv2.resize(imgCrop, (224, 224))
                 imgPreprocessed = np.asarray(imgPreprocessed, dtype=np.float32).reshape(1, 224, 224, 3)
                 imgPreprocessed = (imgPreprocessed / 127.5) - 1
                 
-                # Realizar inferencia con el modelo cargado
-                prediction1 = model.predict(imgPreprocessed)
-                predicted_class_index1 = np.argmax(prediction1)
+                try:
+                    prediction1 = model.predict(imgPreprocessed)
+                    predicted_class_index1 = np.argmax(prediction1)
 
-                # Imprimir el índice predicho para depuración
-                print("Índice predicho:", predicted_class_index1)
+                    predicted_label1 = labels[predicted_class_index1] if predicted_class_index1 < len(labels) else "unrecognized gesture"
+                
+                except Exception as e:
+                    print(f"prediction error: {e}")
+                    predicted_label1 = "prediction error"
 
-                if predicted_class_index1 >= len(labels):
-                    print("Error: Índice predicho fuera de rango:", predicted_class_index1)
-                    predicted_label1 = "Unknown"
-                else:
-                    predicted_label1 = labels[predicted_class_index1]
-
-                # Visualizar la predicción del modelo
-                cv2.putText(imgOutput, predicted_label1.strip(), (x, y - 10), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                # display prediction and bounding box on output image
+                cv2.putText(imgOutput, predicted_label1, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                 cv2.rectangle(imgOutput, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            
+            else:
+                # show message if no hand is detected
+                cv2.putText(imgOutput, "no hand detected", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
         
-        # Convertir la imagen al formato JPEG
+        # encode the frame to jpeg format for streaming
         _, jpeg = cv2.imencode('.jpg', imgOutput)
         frame = jpeg.tobytes()
         
@@ -85,6 +71,7 @@ def get_frame():
 
     cap.release()
 
+# flask routes setup
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -97,5 +84,9 @@ def video_feed():
 def render_pag3_template():
     return render_template('pag3.html')
 
+# release resources when the app finishes
 if __name__ == "__main__":
-    app.run(debug=True)
+    try:
+        app.run(debug=True)
+    finally:
+        cap.release()  # release camera to avoid resource lock
