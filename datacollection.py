@@ -1,111 +1,90 @@
-# Importar las bibliotecas necesarias
-import cv2  # OpenCV para procesamiento de imágenes
-from cvzone.HandTrackingModule import HandDetector  # Detector de manos
-import numpy as np  # Manipulación de matrices
-import math  # Funciones matemáticas
-import time  # Funciones relacionadas con el tiempo
-import os  # Interacción con el sistema operativo
+import cv2
+from cvzone.HandTrackingModule import HandDetector
+import numpy as np
+import math
+import time
+import os
 
-# Inicializar la captura de video desde la cámara
+# configuration settings
+IMG_SIZE = 300
+OFFSET = 20
+BASE_FOLDER = "./Data/train"
+CLASSES = ["class 1", "class 2", "class 3", "class 4", "class 5", "class 6", "class 7"]
+
+# initialize camera and hand detector
 cap = cv2.VideoCapture(0)
-
-# Inicializar el detector de manos con la capacidad de detectar una sola mano
 detector = HandDetector(maxHands=1)
-
-# Definir un valor de desplazamiento para el recorte de imágenes
-offset = 20
-
-# Definir el tamaño de la imagen para el recorte
-imgSize = 300
-
-# Inicializar un contador para contar las imágenes guardadas
+current_class = 0
 counter = 0
 
-# Establecer la carpeta base donde se guardarán las imágenes
-base_folder = r"C:\Users\59598\Desktop\Simeio\Data\train"
+def ensure_dir(path):
+    """ensure that the directory exists; if not, create it."""
+    os.makedirs(path, exist_ok=True)
 
-# Definir las clases disponibles para etiquetar las imágenes
-classes = ["class 1", "class 2", "class 3", "class 4", "class 5", "class 6", "class 7"]
+def save_image(img, class_name):
+    """save processed image to the specified class directory."""
+    global counter
+    folder_path = os.path.join(BASE_FOLDER, class_name)
+    ensure_dir(folder_path)
+    filename = f"image_{time.time():.0f}.jpg"
+    cv2.imwrite(os.path.join(folder_path, filename), img)
+    counter += 1
+    print(f"saved {counter} images to {class_name}")
 
-# Inicializar la clase actual en 0
-current_class = 0   
+def switch_class():
+    """cycle to the next class and print the updated class."""
+    global current_class
+    current_class = (current_class + 1) % len(CLASSES)
+    print(f"Switched to {CLASSES[current_class]}")
 
-# Función para asegurarse de que el directorio existe
-def ensure_dir(folder):
-    if not os.path.exists(folder):
-        os.makedirs(folder)
+def preprocess_image(img, bbox):
+    """crop, pad, and resize the image around the hand bounding box while maintaining aspect ratio."""
+    x, y, w, h = bbox
+    x1, y1 = max(0, x - OFFSET), max(0, y - OFFSET)
+    x2, y2 = min(img.shape[1], x + w + OFFSET), min(img.shape[0], y + h + OFFSET)
+    img_crop = img[y1:y2, x1:x2]
 
-# Bucle principal para procesar los fotogramas del video
+    img_white = np.ones((IMG_SIZE, IMG_SIZE, 3), np.uint8) * 255
+    aspect_ratio = h / w
+
+    if aspect_ratio > 1:
+        k = IMG_SIZE / h
+        w_cal = math.ceil(k * w)
+        img_resize = cv2.resize(img_crop, (w_cal, IMG_SIZE))
+        w_gap = (IMG_SIZE - w_cal) // 2
+        img_white[:, w_gap:w_gap + w_cal] = img_resize
+    else:
+        k = IMG_SIZE / w
+        h_cal = math.ceil(k * h)
+        img_resize = cv2.resize(img_crop, (IMG_SIZE, h_cal))
+        h_gap = (IMG_SIZE - h_cal) // 2
+        img_white[h_gap:h_gap + h_cal, :] = img_resize
+
+    return img_white
+
 while True:
-    # Leer un fotograma de la cámara
     success, img = cap.read()
     if not success:
         continue
 
-    # Utilizar el detector de manos para encontrar las manos en el fotograma
     hands, img = detector.findHands(img)
     if hands:
         hand = hands[0]
-        x, y, w, h = hand['bbox']
+        img_processed = preprocess_image(img, hand['bbox'])
+        cv2.imshow('processed Image', img_processed)
+    else:
+        img_processed = None
 
-        # Crear una imagen blanca del tamaño especificado
-        imgWhite = np.ones((imgSize, imgSize, 3), np.uint8) * 255
+    cv2.imshow('original Image', img)
 
-        # Calcular las coordenadas del área de recorte alrededor de la mano
-        y1 = max(0, y - offset)
-        y2 = min(img.shape[0], y + h + offset)
-        x1 = max(0, x - offset)
-        x2 = min(img.shape[1], x + w + offset)
-
-        # Recortar la región de interés de la imagen original
-        imgCrop = img[y1:y2, x1:x2]
-        imgCropShape = imgCrop.shape
-
-        # Proceder solo si el área de recorte no está vacía
-        if imgCropShape[0] > 0 and imgCropShape[1] > 0:
-            aspectRatio = h / w
-
-            # Redimensionar la imagen de manera acorde manteniendo la relación de aspecto original
-            if aspectRatio > 1:
-                k = imgSize / h
-                wCal = math.ceil(k * w)
-                imgResize = cv2.resize(imgCrop, (wCal, imgSize))
-                wGap = (imgSize - wCal) // 2
-                imgWhite[:, wGap: wGap + wCal] = imgResize
-            else:
-                k = imgSize / w
-                hCal = math.ceil(k * h)
-                imgResize = cv2.resize(imgCrop, (imgSize, hCal))
-                hGap = (imgSize - hCal) // 2
-                imgWhite[hGap: hGap + hCal, :] = imgResize
-
-            # Mostrar las imágenes recortadas y redimensionadas
-            cv2.imshow('ImageCrop', imgCrop)
-            cv2.imshow('ImageWhite', imgWhite)
-
-    # Mostrar la imagen original
-    cv2.imshow('Image', img)
-
-    # Esperar una tecla durante 1 milisegundo
     key = cv2.waitKey(1)
-    
-    # Si se presiona la tecla "s", guardar la imagen recortada en la carpeta correspondiente a la clase actual
-    if key == ord("s"):
-        counter += 1
-        folder = os.path.join(base_folder, classes[current_class])
-        ensure_dir(folder)
-        cv2.imwrite(f'{folder}/Image_{time.time()}.jpg', imgWhite)
-        print(f"Saved {counter} images to {classes[current_class]}")
-
-    # Si se presiona la tecla "c", cambiar a la siguiente clase disponible
-    if key == ord("c"):
-        current_class = (current_class + 1) % len(classes)
-        print(f"Switched to {classes[current_class]}")
-
-    # Si se presiona la tecla "q", salir del bucle y terminar el programa
-    if key == ord("q"):
+    if key == ord("s") and img_processed is not None:
+        save_image(img_processed, CLASSES[current_class])
+    elif key == ord("c"):
+        switch_class()
+    elif key == ord("q"):
         break
 
-# Liberar los recursos de la cámara y cerrar todas las ventanas de OpenCV
+# release resources
 cap.release()
 cv2.destroyAllWindows()
