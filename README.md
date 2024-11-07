@@ -1,87 +1,149 @@
-# Simeio
+# Simeio: Real-Time Gesture Recognition System
 
-Simeio is a hand gesture recognition web application that uses computer vision and machine learning to classify hand gestures in real-time through a webcam. It allows users to interact with the system by recognizing specific gestures and displaying the classification results on a user-friendly web interface.
-
-## Features
-
-- **Real-time hand gesture recognition** using a pre-trained machine learning model.
-- **Computer Vision Processing** powered by OpenCV and cvzone’s HandTrackingModule.
-- **Web Interface** built with Flask to display the video feed and classification results.
-- **Customizable Model**: Easily update or retrain the model with new data for different gesture recognition needs.
+**Simeio** is a real-time gesture recognition system that uses machine learning to classify hand gestures captured through a webcam. This project is built using TensorFlow/Keras for the deep learning model, OpenCV for video capture, and Flask for displaying results in a web interface.
 
 ## Project Structure
 
 ```
-Simeio-main/
-├── Model/               # Contains the machine learning model and labels for classification
-├── app.py               # Main Flask application script
-├── datacollection.py    # Data collection and preprocessing script
-├── trainer.py           # Model training script
-├── static/              # Static files for the web interface (CSS, JS, etc.)
-└── templates/           # HTML templates for rendering web pages
+├── .gitignore                 # Git ignore file for excluding unnecessary files
+├── .env                       # Environment file for configuration (not included in version control)
+├── README.md                  # Project documentation
+├── app.py                     # Flask application for real-time gesture prediction
+├── datacollection.py          # Script to capture and save gesture images for training
+├── trainer.py                 # Model training script using the collected gesture images
+├── data/
+│   ├── train/                 # Folder for training data, organized by class
+│   └── validation/            # Folder for validation data (optional)
+├── model/
+│   ├── keras_model.h5         # Saved Keras model file (optional in version control)
+│   ├── keras_model.keras      # Saved Keras model file (optional in version control)
+│   └── labels.txt             # Label names for each gesture class
+├── static/
+│   ├── css/                   # CSS files for styling the web interface
+│   └── images/                # Images for the web interface
+└── templates/
+    ├── index.html             # Main HTML template for the web interface
+    ├── pag3.html              # Additional HTML page
+    └── ...                    # Other HTML templates as needed
 ```
 
-## Installation
+## Getting Started
 
 ### Prerequisites
 
-- Python 3.x
-- Flask
-- OpenCV
-- TensorFlow or Keras
-- cvzone
+1. **Python 3.6+**: Ensure Python is installed.
+2. **Virtual Environment (optional)**: Recommended to keep dependencies isolated.
 
-### Setup Instructions
+### Installation
 
-1. **Clone the repository**:
+1. Clone the repository:
+    ```bash
+    git clone <repository-url>
+    cd simeio
+    ```
 
-   ```bash
-   git clone https://github.com/your-username/Simeio.git
-   cd Simeio-main
-   ```
+2. Create and activate a virtual environment (optional):
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate  # On Windows, use `.venv\Scripts\activate`
+    ```
 
-2. **Install dependencies**:
+3. Install dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+4. Set up environment variables:
+   - Create a `.env` file in the project root and add paths or configurations as needed:
+     ```plaintext
+     MODEL_PATH=./model/keras_model.keras
+     LABELS_PATH=./model/labels.txt
+     TRAIN_DIR=./data/train
+     VAL_DIR=./data/validation
+     FLASK_DEBUG=True
+     ```
 
-3. **Model Setup**:
-   - Place the pre-trained model file (`keras_model.keras`) and `labels.txt` in the `Model` directory.
-   - Ensure the model is compatible with Keras and supports the classification labels.
+### Usage
 
-4. **Run the Application**:
+#### 1. Data Collection
 
-   ```bash
-   python app.py
-   ```
+Run `datacollection.py` to capture and label gesture images:
 
-5. **Access the Web App**:
-   - Open a browser and go to `http://127.0.0.1:5000` to access the application.
+```bash
+python datacollection.py
+```
 
-## Usage
+- Press **"c"** to switch between gesture classes.
+- Press **"s"** to save an image for the current class.
+- Press **"q"** to quit.
 
-1. **Gesture Recognition**:
-   - The webcam will activate upon starting the app.
-   - Show a hand gesture in front of the camera, and the application will classify it in real-time.
+Captured images will be saved in the `data/train` directory, organized by class.
 
-2. **Customizing the Model**:
-   - To train the model on new gestures, use the `trainer.py` script. Update `datacollection.py` if collecting a new dataset.
+#### 2. Training the Model
 
-## Code Overview
+Run `trainer.py` to train the model using the collected images:
 
-- **app.py**: Main Flask application that handles video capture, hand detection, and gesture classification.
-- **datacollection.py**: Manages data collection for training.
-- **trainer.py**: Script for training the machine learning model.
-- **Model**: Contains the pre-trained model and labels file.
-- **static** and **templates**: Contain the web interface assets and HTML templates.
+```bash
+python trainer.py
+```
 
-## Contributing
+This will:
+- Load the images from `data/train` (and optionally `data/validation`).
+- Train a model using MobileNetV2, with data augmentation for improved robustness.
+- Save the trained model to `model/keras_model.keras`.
 
-Contributions are welcome! Please create a pull request or open an issue to discuss your ideas.
+#### 3. Running the Application
 
-## Future Enhancements
+Run `app.py` to start the Flask web server for real-time gesture recognition:
 
-- **Mobile Support**: Develop a mobile version of the application.
-- **Enhanced Error Handling**: Improve detection and error messages for better user experience.
-- **Additional Gesture Sets**: Expand model to support more gestures.
+```bash
+python app.py
+```
+
+- Open a web browser and go to `http://127.0.0.1:5000` to view the application.
+- Simeio will display real-time predictions based on the gestures captured by the webcam.
+
+### Directory Overview
+
+- **data/**: Contains training and (optionally) validation data, organized by class.
+- **model/**: Stores the trained model (`keras_model.keras`) and label names (`labels.txt`).
+- **static/**: Contains CSS files and images for styling the web interface.
+- **templates/**: HTML templates used by Flask for the web application interface.
+
+### .gitignore
+
+The `.gitignore` file is configured to exclude:
+- `data/` (large datasets, optional)
+- `model/*.h5` and `model/*.keras` (large model files, optional)
+- `__pycache__/` and other Python cache files
+- `.env` for sensitive information
+- `.venv/` for virtual environment dependencies
+
+### Environment Variables
+
+The `.env` file is used to store configurable paths and settings:
+
+```plaintext
+MODEL_PATH=./model/keras_model.keras
+LABELS_PATH=./model/labels.txt
+TRAIN_DIR=./data/train
+VAL_DIR=./data/validation
+FLASK_DEBUG=True
+```
+
+Use the `dotenv` package to load environment variables in your Python scripts:
+```python
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+MODEL_PATH = os.getenv("MODEL_PATH")
+LABELS_PATH = os.getenv("LABELS_PATH")
+```
+
+## Future Improvements
+
+- **Enhance Model Accuracy**: Experiment with different architectures or fine-tuning techniques.
+- **Optimize Real-Time Performance**: Consider using WebSockets for lower-latency streaming.
+- **Expand Gesture Set**: Add more gestures and retrain the model for broader applications.
+- **Deploy on Cloud or Edge Device**: Make Simeio accessible online or on a portable device like Raspberry Pi.
