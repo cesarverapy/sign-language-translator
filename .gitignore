@@ -1,22 +1,17 @@
-# Ignore virtual environment
+# ignore environment variables to keep them private
+.env
+
+# ignore virtual environment
 .venv/
 
-# Ignore Python cache and temporary files
+# ignore dataset
+dataset/
+model/
+
+# ignore python cache and ide-specific files
+.vscode/
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 *.log
-
-# Ignore dataset (optional if you want to keep it private or large)
-Data/
-
-# Ignore model files (optional if models are too large or private)
-Model/*.h5
-Model/*.keras
-
-# Ignore environment variables
-.env
-
-# Ignore IDE-specific files (optional)
-.vscode/
